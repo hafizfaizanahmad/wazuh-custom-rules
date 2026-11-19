@@ -3,19 +3,35 @@
 <!-- Modify it at your will. -->
 <!-- Copyright (C) 2015, Wazuh Inc. -->
 
-<!-- Example -->
+<!-- Rule 1: SSH/PAM failed login from an external IP (tuned: lab host excluded) -->
 <group name="local,syslog,sshd,">
-
-  <!--
-  Dec 10 01:02:02 host sshd[1234]: Failed none for root from 1.1.1.1 port 1066 ssh2
-  -->
-  <rule id="100001" level="5">
-    <if_sid>5716</if_sid>
-    <srcip>1.1.1.1</srcip>
-    <description>sshd: authentication failed from IP 1.1.1.1.</description>
-    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  <rule id="100201" level="10">
+    <if_sid>5503</if_sid>
+    <srcip negate="yes">192.168.88.1</srcip>
+    <description>Custom: Failed SSH/PAM login from external IP (T1110.001)</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>authentication_failed,custom_rule,</group>
   </rule>
-<rule id="100102" level="12">
+</group>
+
+<!-- Rule 5: Root shell opened via sudo -->
+<group name="local,syslog,sudo,">
+  <rule id="100205" level="10">
+    <if_sid>5402,5403</if_sid>
+    <match>COMMAND=/bin/bash</match>
+    <description>Custom: Root shell opened via sudo (T1548.003)</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <group>privilege_escalation,custom_rule,</group>
+  </rule>
+</group>
+
+<!-- Rules 2-4: PowerShell, log deletion, cron persistence -->
+<group name="local,syslog,">
+  <rule id="100102" level="12">
     <if_sid>500</if_sid>
     <match>powershell</match>
     <description>Custom: Suspicious PowerShell Execution Detected (T1059.001)</description>
@@ -39,15 +55,6 @@
     <description>Custom: Persistence Added via Cron Job Modification (T1053.003)</description>
     <mitre>
       <id>T1053.003</id>
-    </mitre>
-  </rule>
-
-  <rule id="100105" level="12">
-    <if_sid>500</if_sid>
-    <match>cat /etc/shadow</match>
-    <description>Custom: Unauthorized Access to Sensitive Shadow File (T1003.008)</description>
-    <mitre>
-      <id>T1003.008</id>
     </mitre>
   </rule>
 </group>
